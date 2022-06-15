@@ -15,6 +15,7 @@ HEADERS = {
     },
 
     INDENIZACOES: {
+        "Verba": 5,
         "Valor": 6,
     }
 

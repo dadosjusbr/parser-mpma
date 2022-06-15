@@ -8,6 +8,7 @@ from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf import text_format
 from parser import parse
 
+
 if "YEAR" in os.environ:
     YEAR = os.environ["YEAR"]
 else:
@@ -38,7 +39,7 @@ def parse_execution(data, file_names):
     coleta.orgao = "mpma"
     coleta.mes = int(MONTH)
     coleta.ano = int(YEAR)
-    coleta.repositorio_coletor = "https://github.com/dadosjusbr/coletor-mpma/tree/coletor-mpma"
+    coleta.repositorio_coletor = "https://github.com/dadosjusbr/coletor-mpma"
     coleta.versao_coletor = CRAWLER_VERSION
     coleta.arquivos.extend(file_names)
     timestamp = Timestamp()
