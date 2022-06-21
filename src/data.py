@@ -1,6 +1,6 @@
 import sys
 import os
-
+import subprocess
 import pandas as pd
 
 # Se for erro de não existir planilhas o retorno vai ser esse:
@@ -11,11 +11,26 @@ STATUS_INVALID_FILE = 5
 
 def _read(file):
     try:
-        data = pd.read_excel(file, engine='openpyxl').to_numpy()
+        data = pd.read_excel(file, engine='xlrd').to_numpy()
     except Exception as excep:
         print(f"Erro lendo as planilhas: {excep}", file=sys.stderr)
         sys.exit(STATUS_INVALID_FILE)
     return data
+
+def _convert_file(file, output_path):
+    """
+    Corrigindo arquivos XLS que estão corrompidos.
+    """
+    subprocess.run(
+        ["libreoffice", "--headless", "--invisible", "--convert-to", "xls", file],
+        capture_output=True,
+        text=True,
+    )  # Pega a saída para não interferir no print dos dados
+    file_name = file.split(sep="/")[-1]
+    file_name = f'{file_name.split(sep=".")[0]}.xls'
+    # Move para o diretório passado por parâmetro
+    subprocess.run(["mv", file_name, f"{output_path}/{file_name}"])
+    return f"{output_path}/{file_name}"
 
 
 def load(file_names, year, month, output_folder):
@@ -26,9 +41,9 @@ def load(file_names, year, month, output_folder):
        :param year e month: usados para fazer a validação na planilha de controle de dados
        :return um objeto Data() pronto para operar com os arquivos
       """
-
-    contracheque = _read([c for c in file_names if "contracheque" in c][0])
-    indenizatorias = _read([i for i in file_names if "indenizatorias" in i][0])
+    print(file_names)
+    contracheque = _read(_convert_file([c for c in file_names if "contracheque" in c][0], output_folder))
+    indenizatorias = _read(_convert_file([i for i in file_names if "indenizatorias" in i][0], output_folder))
 
     return Data(contracheque, indenizatorias, year, month, output_folder)
 
@@ -52,10 +67,10 @@ class Data:
 
         if not (
                 os.path.isfile(
-                    f"{self.output_folder}/membros-ativos-contracheque-{self.month}-{self.year}.xlsx"
+                    f"{self.output_folder}/membros-ativos-contracheque-{self.month}-{self.year}.xls"
                 )
                 or os.path.isfile(
-            f"{self.output_folder}/membros-ativos-verbas-indenizatorias-{self.month}-{self.year}.xlsx"
+            f"{self.output_folder}/membros-ativos-verbas-indenizatorias-{self.month}-{self.year}.xls"
         )
         ):
             sys.stderr.write(f"Não existe planilhas para {self.month}/{self.year}.")

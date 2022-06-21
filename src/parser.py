@@ -20,9 +20,9 @@ def parse_employees(file_name, colect_key, category):
             member.id_contra_cheque = colect_key + "/" + str(counter)
             member.chave_coleta = colect_key
             member.matricula = registration
-            member.nome = name
-            member.funcao = function
-            member.local_trabalho = location
+            member.nome = str(name)
+            member.funcao = str(function)
+            member.local_trabalho = str(location)
             member.tipo = Coleta.ContraCheque.Tipo.Value("MEMBRO")
             member.ativo = True
 
@@ -46,6 +46,10 @@ def create_remuneration(row, category):
         remuneration.categoria = category
         remuneration.item = key
         # Caso o valor seja negativo, ele vai transformar em positivo:
+        print(key)
+        print(value)
+        print(row[4][0])
+        
         remuneration.valor = float(abs(number.format_value(row[value])))
 
         if (category == CONTRACHEQUE and value in [13, 14, 15]):
