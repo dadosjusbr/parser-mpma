@@ -11,7 +11,8 @@ STATUS_INVALID_FILE = 5
 
 def _read(file):
     try:
-        data = pd.read_excel(file, engine='xlrd').to_numpy()
+        d = pd.read_excel(file, engine='xlrd')
+        data = d.to_numpy()
     except Exception as excep:
         print(f"Erro lendo as planilhas: {excep}", file=sys.stderr)
         sys.exit(STATUS_INVALID_FILE)

@@ -7,10 +7,10 @@ from coleta import coleta_pb2 as Coleta
 from headers_keys import (CONTRACHEQUE, INDENIZACOES, HEADERS)
 
 
-def parse_employees(file_name, colect_key, category):
+def parse_employees(file, colect_key, category):
     employees = {}
     counter = 1
-    for row in file_name:
+    for row in file:
         if not number.is_nan(row[0]):
             registration = str(row[0])
             name = row[1]
@@ -40,6 +40,7 @@ def parse_employees(file_name, colect_key, category):
 def create_remuneration(row, category):
     remuneration_array = Coleta.Remuneracoes()
     items = list(HEADERS[category].items())
+    print(row)
     for i in range(len(items)):
         key, value = items[i][0], items[i][1]
         remuneration = Coleta.Remuneracao()
@@ -49,21 +50,22 @@ def create_remuneration(row, category):
         # Caso o valor seja negativo, ele vai transformar em positivo:
 
         
-        remuneration.valor = float(abs(number.format_value(row[value])))
+        #remuneration.valor = float(abs(number.format_value(row[value])))
+        remuneration.valor = float(number.format_value(row[value]))
 
         if (category == CONTRACHEQUE and value in [13, 14, 15]):
-            remuneration.valor = remuneration.valor * (-1)
             remuneration.natureza = Coleta.Remuneracao.Natureza.Value("D")
         else:
             remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
 
         remuneration_array.remuneracao.append(remuneration)
+        
 
     return remuneration_array
 
 
-def update_employees(file_name, employees, category):
-    for row in file_name:
+def update_employees(file, employees, category):
+    for row in file:
         registration = str(row[0])
         if registration in employees.keys():
             emp = employees[registration]
