@@ -11,27 +11,28 @@ def parse_employees(file_name, colect_key, category):
     employees = {}
     counter = 1
     for row in file_name:
-        registration = str(row[0])
-        name = row[1]
-        function = row[2]
-        location = row[3]
-        if not number.is_nan(registration) and registration != "MATRÍCULA":
-            member = Coleta.ContraCheque()
-            member.id_contra_cheque = colect_key + "/" + str(counter)
-            member.chave_coleta = colect_key
-            member.matricula = registration
-            member.nome = str(name)
-            member.funcao = str(function)
-            member.local_trabalho = str(location)
-            member.tipo = Coleta.ContraCheque.Tipo.Value("MEMBRO")
-            member.ativo = True
+        if not number.is_nan(row[0]):
+            registration = str(row[0])
+            name = row[1]
+            function = row[2]
+            location = row[3]
+            if not number.is_nan(registration) and registration != "MATRÍCULA":
+                member = Coleta.ContraCheque()
+                member.id_contra_cheque = colect_key + "/" + str(counter)
+                member.chave_coleta = colect_key
+                member.matricula = registration
+                member.nome = str(name)
+                member.funcao = str(function)
+                member.local_trabalho = str(location)
+                member.tipo = Coleta.ContraCheque.Tipo.Value("MEMBRO")
+                member.ativo = True
 
-            member.remuneracoes.CopyFrom(
-                create_remuneration(row, category)
-            )
+                member.remuneracoes.CopyFrom(
+                    create_remuneration(row, category)
+                )
 
-            employees[registration] = member
-            counter += 1
+                employees[registration] = member
+                counter += 1
 
     return employees
 
@@ -46,9 +47,7 @@ def create_remuneration(row, category):
         remuneration.categoria = category
         remuneration.item = key
         # Caso o valor seja negativo, ele vai transformar em positivo:
-        print(key)
-        print(value)
-        print(row[4][0])
+
         
         remuneration.valor = float(abs(number.format_value(row[value])))
 
