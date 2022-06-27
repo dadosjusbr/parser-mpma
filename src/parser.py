@@ -7,7 +7,7 @@ from coleta import coleta_pb2 as Coleta
 from headers_keys import (CONTRACHEQUE, INDENIZACOES, HEADERS)
 
 
-def parse_employees(file, colect_key, category):
+def parse_employees(file, colect_key):
     employees = {}
     counter = 1
     for row in file:
@@ -30,9 +30,6 @@ def parse_employees(file, colect_key, category):
                 member.remuneracoes.CopyFrom(
                     create_contracheque(row)
                 )
-                member.remuneracoes.CopyFrom(
-                    create_indenizacoes(row, file)
-                )
 
                 employees[registration] = member
                 counter += 1
@@ -46,11 +43,10 @@ def create_indenizacoes(row, file):
     remuneration.categoria = INDENIZACOES
     for matricula in file:
         if matricula[0] == row[0]:
-            remuneration.item = row[5]
-            remuneration.valor = float(number.format_value(row[6]))
+            remuneration.item = str(matricula[5])
+            remuneration.valor = float(number.format_value(matricula[6]))
             remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
             remuneration_array.remuneracao.append(remuneration)
-    print(remuneration_array)
     return remuneration_array
 
 def create_contracheque(row):
@@ -62,7 +58,6 @@ def create_contracheque(row):
         remuneration.natureza = Coleta.Remuneracao.Natureza.Value("R")
         remuneration.categoria = CONTRACHEQUE
         remuneration.item = key
-        
         remuneration.valor = float(number.format_value(row[value]))
 
         if (value in [13, 14, 15]):
@@ -70,14 +65,11 @@ def create_contracheque(row):
         else:
             remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
         
-
         remuneration_array.remuneracao.append(remuneration)
-        
 
     return remuneration_array
 
-
-def update_employees(file_contracheque, file_indenizatorias, employees, category):
+def update_employees(file_contracheque, file_indenizatorias, employees):
     for row in file_contracheque:
         registration = str(row[0])
         if registration in employees.keys():
@@ -85,16 +77,15 @@ def update_employees(file_contracheque, file_indenizatorias, employees, category
             remu = create_indenizacoes(row, file_indenizatorias)
             emp.remuneracoes.MergeFrom(remu)
             employees[registration] = emp
+     
     return employees 
 
-
-def parse(data, colect_key, month, year):
+def parse(data, colect_key):
     employees = {}
     payroll = Coleta.FolhaDePagamento()
 
-    employees.update(parse_employees(data.contracheque, colect_key, CONTRACHEQUE))
-    #update_employees(data.indenizatorias, employees, INDENIZACOES)
-    update_employees(data.contracheque, data.indenizatorias, employees, INDENIZACOES)
+    employees.update(parse_employees(data.contracheque, colect_key))
+    update_employees(data.contracheque, data.indenizatorias, employees)
 
     for i in employees.values():
         payroll.contra_cheque.append(i)

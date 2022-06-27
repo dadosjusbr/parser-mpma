@@ -48,7 +48,7 @@ def parse_execution(data, file_names):
 
     # Consolida folha de pagamento
     payroll = Coleta.FolhaDePagamento()
-    payroll = parse(data, coleta.chave_coleta, MONTH, YEAR)
+    payroll = parse(data, coleta.chave_coleta)
 
     # Monta resultado da coleta.
     rc = Coleta.ResultadoColeta()
