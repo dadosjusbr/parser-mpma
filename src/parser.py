@@ -47,10 +47,6 @@ def create_remuneration(row, category):
         remuneration.natureza = Coleta.Remuneracao.Natureza.Value("R")
         remuneration.categoria = category
         remuneration.item = key
-        # Caso o valor seja negativo, ele vai transformar em positivo:
-
-        
-        #remuneration.valor = float(abs(number.format_value(row[value])))
         remuneration.valor = float(number.format_value(row[value]))
 
         if (category == CONTRACHEQUE and value in [13, 14, 15]):
@@ -62,7 +58,6 @@ def create_remuneration(row, category):
         
 
     return remuneration_array
-
 
 def update_employees(file, employees, category):
     for row in file:
