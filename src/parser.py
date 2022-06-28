@@ -1,10 +1,12 @@
 import sys
 import os
+
+from pandas import notnull
 import number
 
 from coleta import coleta_pb2 as Coleta
 
-from headers_keys import (CONTRACHEQUE, INDENIZACOES, HEADERS)
+from headers_keys import (REMUNERACAOBASICA, EVENTUALTEMP, OBRIGATORIOS, HEADERS)
 
 
 def parse_employees(file, colect_key):
@@ -12,7 +14,7 @@ def parse_employees(file, colect_key):
     counter = 1
     for row in file:
         if not number.is_nan(row[0]):
-            registration = str(row[0])
+            registration = str(row[0])[:-2] # Precisamos disso pois o pandas entende que a matrícula é um número float.
             name = row[1]
             function = row[2]
             location = row[3]
@@ -36,48 +38,73 @@ def parse_employees(file, colect_key):
 
     return employees
 
-def create_indenizacoes(row, file):
-    remuneration_array = Coleta.Remuneracoes()
-    remuneration = Coleta.Remuneracao()
-    remuneration.natureza = Coleta.Remuneracao.Natureza.Value("R")
-    remuneration.categoria = INDENIZACOES
-    for matricula in file:
-        if matricula[0] == row[0]:
-            remuneration.item = str(matricula[5])
-            remuneration.valor = float(number.format_value(matricula[6]))
-            remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
-            remuneration_array.remuneracao.append(remuneration)
-    return remuneration_array
+def remunerations(file_indenizatorias):
+    dict_remuneracoes = {}
+    for row in file_indenizatorias:
+        mat = str(row[0])
+        remuneracoes = dict_remuneracoes.get(mat, Coleta.Remuneracoes())
+        rem = Coleta.Remuneracao()
+        rem.natureza = Coleta.Remuneracao.Natureza.Value("R")
+        rem.categoria = str(row[4])
+        rem.item = str(row[5])
+        rem.valor = float(number.format_value(row[6]))
+        rem.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("O")
+        remuneracoes.remuneracao.append(rem)
+        dict_remuneracoes[mat] = remuneracoes
+    return dict_remuneracoes
+
+def create_indenizacoes(employee, remuneracoes):
+    if employee in remuneracoes.keys():
+        return remuneracoes[employee]
+
 
 def create_contracheque(row):
+    # REMUNERAÇÃO BÁSICA
     remuneration_array = Coleta.Remuneracoes()
-    items = list(HEADERS[CONTRACHEQUE].items())
+    items = list(HEADERS[REMUNERACAOBASICA].items())
     for i in range(len(items)):
         key, value = items[i][0], items[i][1]
         remuneration = Coleta.Remuneracao()
         remuneration.natureza = Coleta.Remuneracao.Natureza.Value("R")
-        remuneration.categoria = CONTRACHEQUE
+        remuneration.categoria = REMUNERACAOBASICA
         remuneration.item = key
         remuneration.valor = float(number.format_value(row[value]))
+        remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B") 
+        remuneration_array.remuneracao.append(remuneration)
 
-        if (value in [13, 14, 15]):
-            remuneration.natureza = Coleta.Remuneracao.Natureza.Value("D")
-        else:
-            remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
-        
+    # REMUNERAÇÃO EVENTUAL OU TEMPORÁRIA
+    items = list(HEADERS[EVENTUALTEMP].items())
+    for i in range(len(items)):
+        key, value = items[i][0], items[i][1]
+        remuneration = Coleta.Remuneracao()
+        remuneration.natureza = Coleta.Remuneracao.Natureza.Value("R")
+        remuneration.categoria = EVENTUALTEMP
+        remuneration.item = key
+        remuneration.valor = float(number.format_value(row[value]))
+        remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
+        remuneration_array.remuneracao.append(remuneration)
+
+    # OBRIGATÓRIOS / LEGAIS
+    items = list(HEADERS[OBRIGATORIOS].items())
+    for i in range(len(items)):
+        key, value = items[i][0], items[i][1]
+        remuneration = Coleta.Remuneracao()
+        remuneration.natureza = Coleta.Remuneracao.Natureza.Value("R")
+        remuneration.categoria = OBRIGATORIOS
+        remuneration.item = key
+        remuneration.valor = float(number.format_value(row[value]))
+        remuneration.natureza = Coleta.Remuneracao.Natureza.Value("D")
         remuneration_array.remuneracao.append(remuneration)
 
     return remuneration_array
 
-def update_employees(file_contracheque, file_indenizatorias, employees):
-    for row in file_contracheque:
-        registration = str(row[0])
-        if registration in employees.keys():
-            emp = employees[registration]
-            remu = create_indenizacoes(row, file_indenizatorias)
-            emp.remuneracoes.MergeFrom(remu)
-            employees[registration] = emp
-     
+def update_employees(file_indenizatorias, employees):
+    remuneracoes = remunerations(file_indenizatorias)
+    for employee in employees:
+        emp = employees[employee]
+        remu = create_indenizacoes(employee, remuneracoes)
+        emp.remuneracoes.MergeFrom(remu)
+        employees[employee] = emp
     return employees 
 
 def parse(data, colect_key):
@@ -85,7 +112,7 @@ def parse(data, colect_key):
     payroll = Coleta.FolhaDePagamento()
 
     employees.update(parse_employees(data.contracheque, colect_key))
-    update_employees(data.contracheque, data.indenizatorias, employees)
+    update_employees(data.indenizatorias, employees)
 
     for i in employees.values():
         payroll.contra_cheque.append(i)
