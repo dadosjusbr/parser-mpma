@@ -48,7 +48,7 @@ def parse_execution(data, file_names):
 
     # Consolida folha de pagamento
     payroll = Coleta.FolhaDePagamento()
-    payroll = parse(data, coleta.chave_coleta, MONTH, YEAR)
+    payroll = parse(data, coleta.chave_coleta)
 
     # Monta resultado da coleta.
     rc = Coleta.ResultadoColeta()
@@ -65,7 +65,6 @@ def parse_execution(data, file_names):
 # Main execution
 def main():
     file_names = [f.rstrip() for f in sys.stdin.readlines()]
-    print(file_names)
     data = dt.load(file_names, YEAR, MONTH, OUTPUT_FOLDER)
     data.validate()
     parse_execution(data, file_names)

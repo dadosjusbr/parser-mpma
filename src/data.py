@@ -42,7 +42,7 @@ def load(file_names, year, month, output_folder):
        :param year e month: usados para fazer a validação na planilha de controle de dados
        :return um objeto Data() pronto para operar com os arquivos
       """
-    print(file_names)
+
     contracheque = _read(_convert_file([c for c in file_names if "contracheque" in c][0], output_folder))
     indenizatorias = _read(_convert_file([i for i in file_names if "indenizatorias" in i][0], output_folder))
 
