@@ -45,17 +45,23 @@ def load(file_names, year, month, output_folder):
 
     contracheque = _read(_convert_file([c for c in file_names if "contracheque" in c][0], output_folder))
     indenizatorias = _read(_convert_file([i for i in file_names if "indenizatorias" in i][0], output_folder))
-
-    return Data(contracheque, indenizatorias, year, month, output_folder)
+    if month == "12": 
+        contracheque13 = _read(_convert_file([c for c in file_names if "contracheque" in c and "13" in c][0], output_folder))
+        return Data(contracheque, indenizatorias, year, month, output_folder, contracheque13)
+    else:
+        return Data(contracheque, indenizatorias, year, month, output_folder, "")
 
 
 class Data:
-    def __init__(self, contracheque, indenizatorias, year, month, output_folder):
+    def __init__(self, contracheque, indenizatorias, year, month, output_folder, contracheque13):
         self.year = year
         self.month = month
         self.output_folder = output_folder
         self.contracheque = contracheque
         self.indenizatorias = indenizatorias
+        self.contracheque13 = ""
+        if month == "12":
+            self.contracheque13 = contracheque13
 
     def validate(self):
         """
@@ -65,6 +71,16 @@ class Data:
         de controle de dados dara um erro retornando o codigo de erro 4,
         esse codigo significa que não existe dados para a data pedida.
         """
+        # A planilha do "mês 13" é baixada juntamente ao mês 12
+        # Caso o mês seja 12, ele validará também se essa outra planilha foi baixada
+        if self.month == "12":
+            if not (
+                os.path.isfile(
+                    f"{self.output_folder}/membros-ativos-contracheque-13-{self.year}.xls"
+                )
+            ):
+                sys.stderr.write(f"Não existe planilhas para 13/{self.year}.")
+                sys.exit(STATUS_DATA_UNAVAILABLE)
 
         if not (
                 os.path.isfile(
