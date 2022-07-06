@@ -1,10 +1,8 @@
-from pickle import DICT
 import sys
 import os
 
 from pandas import notnull
 import number
-import numpy as np
 
 from coleta import coleta_pb2 as Coleta
 
@@ -33,7 +31,7 @@ def parse_employees(file, colect_key, file_cq13, month):
                 member.tipo = Coleta.ContraCheque.Tipo.Value("MEMBRO")
                 member.ativo = True
                 if month == "12" and row[0] in file_cq13:
-                    employee = create_contracheque13(registration, cq13)
+                    employee = cq13.get(registration)
                     member.remuneracoes.CopyFrom(
                     create_contracheque(row, month, employee)
                     ) 
@@ -70,21 +68,17 @@ def create_indenizacoes(employee, remuneracoes):
 def create_contracheque(row, month, employee):
     # REMUNERAÇÃO BÁSICA
     remuneration_array = Coleta.Remuneracoes()
-    items = list(HEADERS[REMUNERACAOBASICA].items())
-    for i in range(len(items)):
-        key, value = items[i][0], items[i][1]
+    for key, value in HEADERS[REMUNERACAOBASICA].items():
         remuneration = Coleta.Remuneracao()
         remuneration.natureza = Coleta.Remuneracao.Natureza.Value("R")
         remuneration.categoria = REMUNERACAOBASICA
         remuneration.item = key
-        remuneration.valor = float(number.format_value(row[value])) 
-        remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B") 
+        remuneration.valor = float(number.format_value(row[value]))
+        remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
         remuneration_array.remuneracao.append(remuneration)
 
     # REMUNERAÇÃO EVENTUAL OU TEMPORÁRIA
-    items = list(HEADERS[EVENTUALTEMP].items())
-    for i in range(len(items)):
-        key, value = items[i][0], items[i][1]
+    for key, value in HEADERS[EVENTUALTEMP].items():
         remuneration = Coleta.Remuneracao()
         remuneration.natureza = Coleta.Remuneracao.Natureza.Value("R")
         remuneration.categoria = EVENTUALTEMP
@@ -99,9 +93,7 @@ def create_contracheque(row, month, employee):
         remuneration_array.remuneracao.append(remuneration)
 
     # OBRIGATÓRIOS / LEGAIS
-    items = list(HEADERS[OBRIGATORIOS].items())
-    for i in range(len(items)):
-        key, value = items[i][0], items[i][1]
+    for key, value in HEADERS[OBRIGATORIOS].items():
         remuneration = Coleta.Remuneracao()
         remuneration.categoria = OBRIGATORIOS
         remuneration.item = key
@@ -119,13 +111,10 @@ def create_contracheque(row, month, employee):
 def contracheque13(cq13):
     dict_cq13 = {}
     for row in cq13:
-        if not number.is_nan(row[0]):
-            mat = str(row[0])[:-2]
+        if not number.is_nan(row[0]): # Para não confundir o cabeçalho da planilha de contracheque com os valores. 
+            mat = str(row[0])[:-2]    # Precisamos disso pois o pandas entende que a matrícula é um número float.
             remuneracoes = dict_cq13.get(mat, Coleta.Remuneracoes())
-            rem = Coleta.Remuneracao()
-            items = list(MES13[EVENTUALTEMP].items())
-            for i in range(len(items)):
-                key, value = items[i][0], items[i][1]
+            for key, value in MES13[EVENTUALTEMP].items():
                 remuneration = Coleta.Remuneracao()
                 remuneration.natureza = Coleta.Remuneracao.Natureza.Value("R")
                 remuneration.categoria = EVENTUALTEMP
@@ -133,9 +122,7 @@ def contracheque13(cq13):
                 remuneration.valor = float(number.format_value(row[value]))
                 remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
                 remuneracoes.remuneracao.append(remuneration)
-            items = list(MES13[OBRIGATORIOS].items())
-            for i in range(len(items)):
-                key, value = items[i][0], items[i][1]
+            for key, value in MES13[OBRIGATORIOS].items():
                 remuneration = Coleta.Remuneracao()
                 remuneration.categoria = OBRIGATORIOS
                 remuneration.item = key
@@ -145,9 +132,6 @@ def contracheque13(cq13):
             dict_cq13[mat] = remuneracoes
     return dict_cq13
 
-def create_contracheque13(employee, cq13):
-    if employee in cq13.keys():
-        return cq13[employee]
 
 def update_employees(file_indenizatorias, employees):
     remuneracoes = remunerations(file_indenizatorias)
