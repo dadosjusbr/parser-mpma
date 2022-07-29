@@ -51,7 +51,7 @@ def parse_employees(file, colect_key, file_cq13, month):
 def remunerations(file_indenizatorias):
     dict_remuneracoes = {}
     for row in file_indenizatorias:
-        if not number.is_nan(row[0]) and number.is_nan(row[6]):
+        if number.is_nan not in row:
             mat = str(row[0])
             remuneracoes = dict_remuneracoes.get(mat, Coleta.Remuneracoes())
             rem = Coleta.Remuneracao()
@@ -150,8 +150,7 @@ def update_employees(file_indenizatorias, employees):
     for employee in employees:
         emp = employees[employee]
         remu = create_indenizacoes(employee, remuneracoes)
-        if "NoneType" not in str(type(remu)):
-            emp.remuneracoes.MergeFrom(remu)
+        emp.remuneracoes.MergeFrom(remu)
         employees[employee] = emp
     return employees
 
