@@ -3,8 +3,6 @@ from coleta import coleta_pb2 as Coleta
 
 def catch(month, year):
     metadata = Coleta.Metadados()
-    metadata.nao_requer_login = True
-    metadata.nao_requer_captcha = True
     metadata.acesso = Coleta.Metadados.FormaDeAcesso.NECESSITA_SIMULACAO_USUARIO
     metadata.extensao = Coleta.Metadados.Extensao.XLS
     metadata.estritamente_tabular = True
