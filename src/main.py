@@ -32,13 +32,19 @@ if "GIT_COMMIT" in os.environ:
 else:
     PARSER_VERSION = "unspecified"
 
-# Pegando o ID do último commit
+# Pegando o ID do último commit do coletor
 headers = {
     'Accept': 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
 }
-response = requests.get('https://api.github.com/repos/dadosjusbr/coletor-mpma/commits', headers=headers).json()
-CRAWLER_VERSION = response[0]["sha"]
+response = requests.get(
+    'https://api.github.com/repos/dadosjusbr/coletor-mpma/commits', headers=headers)
+if response.status_code == 200:
+    response = response.json()
+    CRAWLER_VERSION = response[0]["sha"]
+else:
+    CRAWLER_VERSION = "unspecified"
+
 
 def parse_execution(data, file_names):
     # Cria objeto com dados da coleta.
