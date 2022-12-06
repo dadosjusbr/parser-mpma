@@ -7,6 +7,7 @@ from coleta import coleta_pb2 as Coleta, IDColeta
 from google.protobuf.timestamp_pb2 import Timestamp
 from google.protobuf import text_format
 from parser import parse
+import requests
 
 
 if "YEAR" in os.environ:
@@ -27,10 +28,17 @@ else:
     OUTPUT_FOLDER = "/output"
 
 if "GIT_COMMIT" in os.environ:
-    CRAWLER_VERSION = os.environ["GIT_COMMIT"]
+    PARSER_VERSION = os.environ["GIT_COMMIT"]
 else:
-    CRAWLER_VERSION = "unspecified"
+    PARSER_VERSION = "unspecified"
 
+# Pegando o ID do último commit
+headers = {
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+}
+response = requests.get('https://api.github.com/repos/dadosjusbr/coletor-mpma/commits', headers=headers).json()
+CRAWLER_VERSION = response[0]["sha"]
 
 def parse_execution(data, file_names):
     # Cria objeto com dados da coleta.
@@ -42,7 +50,7 @@ def parse_execution(data, file_names):
     coleta.repositorio_coletor = "https://github.com/dadosjusbr/coletor-mpma"
     coleta.versao_coletor = CRAWLER_VERSION
     coleta.repositorio_parser = "https://github.com/dadosjusbr/parser-mpma"
-    coleta.versao_parser = "unspecified"
+    coleta.versao_parser = PARSER_VERSION
     coleta.arquivos.extend(file_names)
     timestamp = Timestamp()
     timestamp.GetCurrentTime()
