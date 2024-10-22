@@ -2,16 +2,17 @@
 FROM python:3.8-slim-buster
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends ca-certificates
+ && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    libreoffice \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
 # set the working directory in the container
 WORKDIR /code
 
 # copy the dependencies file to the working directory
 COPY requirements.txt .
-
-# install libreoffice
-RUN apt-get install -y libreoffice 
 
 # install dependencies
 RUN pip install -r requirements.txt
