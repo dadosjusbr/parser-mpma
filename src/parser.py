@@ -120,9 +120,9 @@ def contracheque13(cq13):
     dict_cq13 = {}
     for row in cq13:
         # Para não confundir o cabeçalho da planilha de contracheque com os valores.
-        if not number.is_nan(row[0]):
+        if not number.is_nan(row[0]) and str(row[0]).casefold() != "matrícula":
             # Precisamos disso pois o pandas entende que a matrícula é um número float.
-            mat = str(row[0])[:-2]
+            mat = str(row[0])
             remuneracoes = dict_cq13.get(mat, Coleta.Remuneracoes())
             for key, value in MES13[EVENTUALTEMP].items():
                 remuneration = Coleta.Remuneracao()
