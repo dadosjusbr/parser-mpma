@@ -18,11 +18,11 @@ def parse_employees(file, colect_key, file_cq13, month):
     for row in file:
         if not number.is_nan(row[0]):
             # Precisamos disso pois o pandas entende que a matrícula é um número float.
-            registration = str(row[0])[:-2]
+            registration = str(row[0])
             name = row[1]
             function = row[2]
             location = row[3]
-            if not number.is_nan(registration) and registration != "MATRÍCULA":
+            if not number.is_nan(registration) and registration.casefold() != "matrícula":
                 member = Coleta.ContraCheque()
                 member.id_contra_cheque = colect_key + "/" + str(counter)
                 member.chave_coleta = colect_key
@@ -120,9 +120,9 @@ def contracheque13(cq13):
     dict_cq13 = {}
     for row in cq13:
         # Para não confundir o cabeçalho da planilha de contracheque com os valores.
-        if not number.is_nan(row[0]):
+        if not number.is_nan(row[0]) and str(row[0]).casefold() != "matrícula":
             # Precisamos disso pois o pandas entende que a matrícula é um número float.
-            mat = str(row[0])[:-2]
+            mat = str(row[0])
             remuneracoes = dict_cq13.get(mat, Coleta.Remuneracoes())
             for key, value in MES13[EVENTUALTEMP].items():
                 remuneration = Coleta.Remuneracao()
