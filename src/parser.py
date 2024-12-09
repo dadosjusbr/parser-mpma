@@ -79,7 +79,10 @@ def create_contracheque(row, month, employee):
         remuneration.categoria = REMUNERACAOBASICA
         remuneration.item = key
         remuneration.valor = float(number.format_value(row[value]))
-        remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
+        if value == 4:
+            remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
+        else:
+            remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("O")
         remuneration_array.remuneracao.append(remuneration)
 
     # REMUNERAÇÃO EVENTUAL OU TEMPORÁRIA
@@ -95,7 +98,7 @@ def create_contracheque(row, month, employee):
                         number.format_value(row[value])) + emp.valor
         else:
             remuneration.valor = float(number.format_value(row[value]))
-        remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("B")
+        remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("O")
         remuneration_array.remuneracao.append(remuneration)
 
     # OBRIGATÓRIOS / LEGAIS
@@ -131,7 +134,7 @@ def contracheque13(cq13):
                 remuneration.item = key
                 remuneration.valor = float(number.format_value(row[value]))
                 remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value(
-                    "B")
+                    "O")
                 remuneracoes.remuneracao.append(remuneration)
             for key, value in MES13[OBRIGATORIOS].items():
                 remuneration = Coleta.Remuneracao()
