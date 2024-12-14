@@ -6,10 +6,10 @@ import number
 
 from coleta import coleta_pb2 as Coleta
 
-from headers_keys import (MES13, REMUNERACAOBASICA,
-                          EVENTUALTEMP, OBRIGATORIOS, HEADERS)
+from headers_keys import MES13, REMUNERACAOBASICA, EVENTUALTEMP, OBRIGATORIOS, HEADERS
 
 
+# Listando os membros da folha de contracheque
 def parse_employees(file, colect_key, file_cq13, month):
     employees = {}
     counter = 1
@@ -22,7 +22,10 @@ def parse_employees(file, colect_key, file_cq13, month):
             name = row[1]
             function = row[2]
             location = row[3]
-            if not number.is_nan(registration) and registration.casefold() != "matrícula":
+            if (
+                not number.is_nan(registration)
+                and registration.casefold() != "matrícula"
+            ):
                 member = Coleta.ContraCheque()
                 member.id_contra_cheque = colect_key + "/" + str(counter)
                 member.chave_coleta = colect_key
@@ -38,9 +41,7 @@ def parse_employees(file, colect_key, file_cq13, month):
                         create_contracheque(row, month, employee)
                     )
                 else:
-                    member.remuneracoes.CopyFrom(
-                        create_contracheque(row, month, "")
-                    )
+                    member.remuneracoes.CopyFrom(create_contracheque(row, month, ""))
 
                 employees[registration] = member
                 counter += 1
@@ -48,6 +49,8 @@ def parse_employees(file, colect_key, file_cq13, month):
     return employees
 
 
+# Listando cada rubrica da folha de indenizações e seus valores
+# R = Receita; O = Outras
 def remunerations(file_indenizatorias):
     dict_remuneracoes = {}
     for row in file_indenizatorias:
@@ -70,6 +73,9 @@ def create_indenizacoes(employee, remuneracoes):
         return remuneracoes[employee]
 
 
+# Listando cada rubrica do contracheque e seus valores
+# Apenas a Remuneração do Cargo Efetivo é do tipo B = Base
+# Os demais são O, outras remunerações, ou D, descontos
 def create_contracheque(row, month, employee):
     # REMUNERAÇÃO BÁSICA
     remuneration_array = Coleta.Remuneracoes()
@@ -94,8 +100,9 @@ def create_contracheque(row, month, employee):
         if month == "12" and value in [7, 9] and employee != "":
             for emp in employee.remuneracao:
                 if key in emp.item:
-                    remuneration.valor = float(
-                        number.format_value(row[value])) + emp.valor
+                    remuneration.valor = (
+                        float(number.format_value(row[value])) + emp.valor
+                    )
         else:
             remuneration.valor = float(number.format_value(row[value]))
         remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("O")
@@ -110,15 +117,18 @@ def create_contracheque(row, month, employee):
             for emp in employee.remuneracao:
                 if key in emp.item:
                     remuneration.valor = (
-                        float(number.format_value(row[value])) + emp.valor) * (-1)
+                        float(number.format_value(row[value])) + emp.valor
+                    ) * (-1)
         else:
-            remuneration.valor = float(number.format_value(row[value]))*(-1)
+            remuneration.valor = float(number.format_value(row[value])) * (-1)
         remuneration.natureza = Coleta.Remuneracao.Natureza.Value("D")
         remuneration_array.remuneracao.append(remuneration)
 
     return remuneration_array
 
 
+# O MPMA possui um contracheque "a mais" referente ao 13º
+# Juntamos com a folha de dezembro
 def contracheque13(cq13):
     dict_cq13 = {}
     for row in cq13:
@@ -133,21 +143,20 @@ def contracheque13(cq13):
                 remuneration.categoria = EVENTUALTEMP
                 remuneration.item = key
                 remuneration.valor = float(number.format_value(row[value]))
-                remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value(
-                    "O")
+                remuneration.tipo_receita = Coleta.Remuneracao.TipoReceita.Value("O")
                 remuneracoes.remuneracao.append(remuneration)
             for key, value in MES13[OBRIGATORIOS].items():
                 remuneration = Coleta.Remuneracao()
                 remuneration.categoria = OBRIGATORIOS
                 remuneration.item = key
-                remuneration.valor = float(
-                    number.format_value(row[value]))
+                remuneration.valor = float(number.format_value(row[value]))
                 remuneration.natureza = Coleta.Remuneracao.Natureza.Value("D")
                 remuneracoes.remuneracao.append(remuneration)
             dict_cq13[mat] = remuneracoes
     return dict_cq13
 
 
+# Mapeando as indenizações para cada membro da folha de contracheque
 def update_employees(file_indenizatorias, employees):
     remuneracoes = remunerations(file_indenizatorias)
     for employee in employees:
@@ -158,13 +167,16 @@ def update_employees(file_indenizatorias, employees):
     return employees
 
 
+# Executando todas as funções,
+# iterando os contracheques e indenizações e retornando a folha completa
 def parse(data, colect_key):
     employees = {}
     payroll = Coleta.FolhaDePagamento()
     cq13 = contracheque13(data.contracheque13)
 
-    employees.update(parse_employees(data.contracheque,
-                     colect_key, data.contracheque13, data.month))
+    employees.update(
+        parse_employees(data.contracheque, colect_key, data.contracheque13, data.month)
+    )
     update_employees(data.indenizatorias, employees)
 
     for i in employees.values():
